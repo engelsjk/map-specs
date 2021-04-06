@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>MapSpecs</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+    <script src="bundle.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+
+        const tileRegex = new RegExp(`\/[0-9]+\/[0-9]+\/[0-9]+`);
+        let tilemap = new Map();
+
+        mapboxgl.accessToken = '<<MAPBOX_ACCESS_TOKEN>>';
+
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-74.5, 40],
+            zoom: 9,
+            transformRequest: (url, type) => {
+                if (type === "Tile") {
+                    req(url, type);
+                }
+            }
+        });
+
+        map.on('load', () => {
+            console.log("map load");
+    
+            map.addSource('tiles-geojson', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: []
+                }
+            });
+
+            map.addLayer({
+                id: 'tiles',
+                source: 'tiles-geojson',
+                type: 'line',
+                paint: {
+                    'line-color': '#000'
+                }
+            });
+
+            drawTiles(map.getSource('tiles-geojson'));
+
+            map.on('drag', () => {
+                drawTiles(map.getSource('tiles-geojson'));
+            })
+
+            map.on('zoom', () => {
+                drawTiles(map.getSource('tiles-geojson'));
+            })
+        })
+
+        function req(url, type) {
+            decodeTileStats(url).then(
+                tileStats => {
+                    tileStats.tile = tileFromURL(tileRegex, url);
+                    console.log(JSON.stringify(tileStats));
+                    if(!tilemap.has(tileStats.tile)){
+                        tilemap.set(tileStats.tile, tileStats);
+                    }
+                }
+            );
+
+            // checkCached(url).then(
+            //     result => console.log(`${url} : ${result ? "cached" : "not cached"}`),
+            // );
+        }
+
+    </script>
+
+</body>
+
+</html>
