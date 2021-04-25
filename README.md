@@ -1,4 +1,4 @@
-# mapspecs
+# map-specs
 
 Visualize slippy tile extents and display vector tile metadata (number of layers, features, etc).
 
